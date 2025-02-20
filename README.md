@@ -2,7 +2,7 @@
 ESPHome configuration for the EASUN Icharger MPPT-4880
 ![easun_icharger_mppt4880](https://github.com/user-attachments/assets/ecd4db7a-c9f6-4ccf-938b-e0895486b408)
 
-Got this charger and was unable to find a proper configuration setup for using ESPHome to communicate with the device. Everything was either half-assed or partially worked.
+Got this charger and was unable to find a proper configuration setup for controlling it via ESPHome. Everything was either half-assed or partially worked.
 
 The yaml file here should hopefully work properly for anyone. The only part skipped was the battery equalization features which are not needed for lithium batteries.
 
