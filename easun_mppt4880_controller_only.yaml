@@ -1,0 +1,448 @@
+web_server:
+  version: 3
+  port: 80
+  sorting_groups:
+      - id: sorting_group_live_settings
+        name: "Live Data"
+        sorting_weight: 5
+      - id: sorting_group_historic_settings
+        name: "Historical Data"
+        sorting_weight: 10
+      - id: sorting_group_state_settings
+        name: "Controller States"
+        sorting_weight: 15
+      - id: sorting_group_espcontroller_settings
+        name: "ESPHome Controller"
+        sorting_weight: 20
+      - id: sorting_group_configuration_settings
+        name: "MPPT Controller Settings"
+        sorting_weight: 25
+
+text_sensor:
+  - platform: template
+    name: "Battery Float Voltage Defaults "
+    id: default_battery_float_voltages_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"12V:13.5V | 24V:27V | 48V:54V"};
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: template
+    name: "Battery Absorption Voltage Defaults"
+    id: default_battery_absorption_voltages_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"12V:14.1V | 24V:28.2V | 48V:56.4V"};
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: template
+    name: "Battery Low Voltage Defaults"
+    id: default_battery_low_voltages_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"12V:8.5V | 24V:17V | 48V:34V"};
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: template
+    name: "Battery Type Configuration"
+    id: battery_types_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"0:Not Set | 1:User Defined | 2:Lithium | 3:Sealed Lead | 4:AGM(default) | 5:GEL | 6:Flooded"};
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+      
+  - platform: template
+    name: "Battery Voltage Configuration"
+    id: battery_voltage_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"0:Auto | 12:12V | 24:24V | 36:36V | 48:48V"};
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: template
+    name: "MPPT State Values"
+    id: mppt_state_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"0:Stopped | 1:MPPT | 2:Current Limiting"};
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+  - platform: template
+    name: "MPPT Charging State Values"
+    id: charging_state_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"0:Stopped | 1:Asborption | 2:Float | 3:EQ"};
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+  - platform: template
+    name: "Charger State Values"
+    id: charger_state_diag
+    icon: "mdi:information-box"
+    entity_category: "diagnostic"
+    lambda: |-
+      return {"0:Initialization | 1:SelfTest | 2:Working | 3:Stopped"};
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+
+uart:
+  rx_pin: GPIO32 #CHANGE THIS VALUE TO YOURS!
+  tx_pin: GPIO26 #CHANGE THIS VALUE TO YOURS!
+  id: mod_bus
+  baud_rate: 9600
+  stop_bits: 1
+  debug:
+
+modbus:
+  #flow_control_pin: 23
+  uart_id: mod_bus
+  id: mod_bus_mppt
+  #send_wait_time: 2s
+
+modbus_controller:
+  - id: mppt
+    ## the Modbus device addr
+    address: 0x1 #CHANGE THIS VALUE TO YOURS IF NECESSARY!
+    modbus_id: mod_bus_mppt
+    command_throttle: 200ms
+    update_interval: 5s
+    max_cmd_retries: 0
+    
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: Charger State
+    address: 15201
+    register_type: holding
+    icon: mdi:state-machine
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: MPPT state
+    address: 15202
+    register_type: holding
+    icon: mdi:state-machine
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: MPPT Charging state
+    address: 15203
+    register_type: holding
+    icon: mdi:state-machine
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_state_settings
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    id: pv_input_voltage
+    name: PV Input Voltage
+    address: 15205
+    unit_of_measurement: "V"
+    register_type: holding
+    value_type: U_WORD
+    register_count: 1
+    accuracy_decimals: 1
+    icon: mdi:solar-power
+    filters:
+      - multiply: 0.1  
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 1
+  
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    id: batt_input_voltage
+    name: Battery Voltage
+    address: 15206
+    unit_of_measurement: "V"
+    value_type: U_WORD
+    register_count: 1
+    register_type: holding
+    accuracy_decimals: 1
+    icon: mdi:sine-wave
+    filters:
+      - multiply: 0.1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 3
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    id: batt_input_current
+    icon: mdi:lightning-bolt-circle
+    name: Battery Charge Current
+    address: 15207
+    unit_of_measurement: "A" 
+    register_type: holding
+    value_type: U_WORD
+    register_count: 1
+    filters:
+      - multiply: 0.1
+    accuracy_decimals: 1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 2
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    id: pv_input_power
+    name: PV Input Power
+    address: 15208
+    unit_of_measurement: "W"
+    register_type: holding
+    value_type: U_WORD
+    register_count: 1
+    accuracy_decimals: 1
+    icon: mdi:solar-power
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: MPPT Controller Temperature
+    address: 15209
+    unit_of_measurement: "°C"
+    register_type: holding
+    icon: mdi:thermometer
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 4
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: BTS Temperature
+    address: 15210
+    unit_of_measurement: "°C"
+    register_type: holding
+    icon: mdi:thermometer-plus
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 5
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: Error Message
+    address: 15213
+    register_type: holding
+    icon: mdi:alert-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 7
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: Warning Message
+    address: 15214
+    register_type: holding
+    icon: mdi:alert-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 6
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: Highest PV Input
+    address: 15217
+    unit_of_measurement: "kWh"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 1
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: Lowest PV Input
+    address: 15218
+    unit_of_measurement: "kWh"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 1
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: PV Daily
+    address: 15219
+    unit_of_measurement: "kWh"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 2
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: PV Hourly
+    address: 15220
+    unit_of_measurement: "kWh"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 3
+  
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: PV Minute
+    address: 15221
+    unit_of_measurement: "kWh"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 4
+
+number: 
+   
+  - platform: modbus_controller
+    name: Battery Float Voltage 
+    address: 10103
+    value_type: U_WORD
+    register_type: holding
+    unit_of_measurement: "V"
+    icon: mdi:cog
+    min_value: 12
+    max_value: 55
+    step: 0.1
+    lambda: "return  x * 0.1; "
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+    
+  - platform: modbus_controller
+    name: Battery Absorption Voltage
+    address: 10104
+    value_type: U_WORD
+    register_type: holding
+    unit_of_measurement: "V"
+    icon: mdi:cog
+    min_value: 13
+    max_value: 57
+    step: 0.1
+    lambda: "return  x * 0.1; "
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    name: Battery Low Voltage
+    address: 10105
+    value_type: U_WORD
+    register_type: holding
+    unit_of_measurement: "V"
+    icon: mdi:cog
+    min_value: 8
+    max_value: 44
+    step: 0.5
+    lambda: "return  x * 0.1; "
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    id: mppt_max_current
+    name: MPPT Max Charge Current 
+    address: 10108
+    value_type: U_WORD
+    icon: mdi:cog
+    register_type: holding
+    unit_of_measurement: "A"
+    min_value: 1
+    max_value: 80
+    multiply: 10
+    step: 0.1
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    name: Battery Type
+    address: 10110
+    value_type: U_WORD
+    register_type: holding
+    icon: mdi:cog
+    min_value: 0
+    max_value: 6
+    step: 1
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    name: Battery Ah
+    address: 10111
+    value_type: U_WORD
+    register_type: holding
+    icon: mdi:cog
+    unit_of_measurement: "Ah"
+    min_value: 1
+    max_value: 900
+    step: 1
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    name: Delete Historical Data
+    address: 10112
+    value_type: U_WORD
+    register_type: holding
+    icon: mdi:chart-timeline-variant
+    min_value: 0
+    max_value: 1
+    step: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+
+  - platform: modbus_controller
+    name: Battery Voltage
+    address: 10113
+    value_type: U_WORD
+    register_type: holding
+    icon: mdi:cog
+    min_value: 0
+    max_value: 48
+    step: 12
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
