@@ -4,6 +4,8 @@ ESPHome configuration for the EASUN Icharger MPPT-4880
 
 Got this charger and was unable to find a proper configuration setup for controlling it via ESPHome. Everything was either half-assed or partially worked.
 
+**EDIT:: Died after 5 days of use. Unless I am able to reset the device or get another, I will no longer update this!**
+
 The yaml file here should hopefully work properly for anyone. The only part skipped was the battery equalization features which are not needed for lithium batteries.
 
 This setup was done using an M5 Stack Atom Lite 2020 (not the S3 variant!) and an M5 Stack Tail485 to communicate with the Easun using the COM port:
