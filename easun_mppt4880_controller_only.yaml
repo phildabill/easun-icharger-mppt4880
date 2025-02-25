@@ -101,8 +101,8 @@ text_sensor:
 
 
 uart:
-  rx_pin: GPIO32 #CHANGE THIS VALUE TO YOURS!
-  tx_pin: GPIO26 #CHANGE THIS VALUE TO YOURS!
+  rx_pin: GPIO32 #CHANGE THIS VALUE TO YOUR RX PIN
+  tx_pin: GPIO26 #CHANGE THIS VALUE TO YOUR TX PIN
   id: mod_bus
   baud_rate: 9600
   stop_bits: 1
@@ -117,7 +117,7 @@ modbus:
 modbus_controller:
   - id: mppt
     ## the Modbus device addr
-    address: 0x1 #CHANGE THIS VALUE TO YOURS IF NECESSARY!
+    address: 0x1 #CHANGE THIS VALUE IF NEEDED
     modbus_id: mod_bus_mppt
     command_throttle: 200ms
     update_interval: 5s
@@ -188,6 +188,17 @@ sensor:
     icon: mdi:sine-wave
     filters:
       - multiply: 0.1
+    web_server:
+      sorting_group_id: sorting_group_live_settings
+      sorting_weight: 3
+
+
+  - platform: template
+    name: Battery Percentage
+    unit_of_measurement: "%"
+    icon: mdi:information-box
+    lambda: |-
+      return (id(batt_input_voltage).state - 21)/(28.8-21)*100 ;
     web_server:
       sorting_group_id: sorting_group_live_settings
       sorting_weight: 3
@@ -276,6 +287,20 @@ sensor:
 
   - platform: modbus_controller
     modbus_controller_id: mppt
+    id: batt_assumed_voltage
+    name: Battery Voltage Set
+    address: 15215
+    unit_of_measurement: "V"
+    value_type: U_WORD
+    register_count: 1
+    register_type: holding
+    accuracy_decimals: 1
+    icon: mdi:information-box
+    web_server:
+      sorting_group_id: sorting_group_configuration_settings
+
+  - platform: modbus_controller
+    modbus_controller_id: mppt
     name: Highest PV Input
     address: 15217
     unit_of_measurement: "kWh"
@@ -339,6 +364,19 @@ sensor:
       sorting_group_id: sorting_group_historic_settings
       sorting_weight: 4
 
+  - platform: modbus_controller
+    modbus_controller_id: mppt
+    name: SOC??
+    address: 15223
+    unit_of_measurement: "%"
+    register_type: holding
+    icon: mdi:lightning-bolt-circle
+    value_type: U_WORD
+    register_count: 1
+    web_server:
+      sorting_group_id: sorting_group_historic_settings
+      sorting_weight: 4
+
 number: 
    
   - platform: modbus_controller
@@ -351,7 +389,8 @@ number:
     min_value: 12
     max_value: 55
     step: 0.1
-    lambda: "return  x * 0.1; "
+    multiply: 10
+
     web_server:
       sorting_group_id: sorting_group_configuration_settings
     
@@ -365,7 +404,7 @@ number:
     min_value: 13
     max_value: 57
     step: 0.1
-    lambda: "return  x * 0.1; "
+    multiply: 10
     web_server:
       sorting_group_id: sorting_group_configuration_settings
 
@@ -379,7 +418,7 @@ number:
     min_value: 8
     max_value: 44
     step: 0.5
-    lambda: "return  x * 0.1; "
+    multiply: 10
     web_server:
       sorting_group_id: sorting_group_configuration_settings
 
